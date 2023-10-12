@@ -15,26 +15,22 @@ namespace CyberArk.PSM.GenerateTOTPPreconnect
 
         public Dictionary<string, SecureString> GetParameters(Dictionary<string, SecureString> parameters, LogUtils.WriteToLogHandler writeToLogMethod)
         {
-            string totpCode;
+            Totp totp;
 
             try
             {
-                byte[] totpSecretBytes = Encoding.UTF8.GetBytes(new NetworkCredential(string.Empty, parameters["logonaccount_password"]).Password);
-
                 writeToLogMethod("Generating TOTP.", Consts.LOG_LEVEL_INFO);
-                
-                var totp = new Totp(totpSecretBytes);
-                totpCode = totp.ComputeTotp();
+                totp = new Totp(Encoding.UTF8.GetBytes(new NetworkCredential(string.Empty, parameters["logonaccount_password"]).Password));
             }
             catch (KeyNotFoundException ex)
             {
                 writeToLogMethod(string.Format("Key not found in parameters dictionary: {0}", ex.ToString()), Consts.LOG_LEVEL_ERROR);
-                throw new PreconnectException("Key not found in parameters dictionary");
+                throw new PreconnectException("Key not found in parameters dictionary.");
             }
             catch (Exception ex)
             {
                 writeToLogMethod(string.Format("Error while generating TOTP: {0}", ex.ToString()), Consts.LOG_LEVEL_ERROR);
-                throw new PreconnectException("Error while generating TOTP");
+                throw new PreconnectException("Error while generating TOTP.");
             }
 
             writeToLogMethod("Successfully generated TOTP.", Consts.LOG_LEVEL_INFO);
@@ -42,7 +38,7 @@ namespace CyberArk.PSM.GenerateTOTPPreconnect
             return new Dictionary<string, SecureString> {
                 {
                     TOTP_OUTPUT_PARAMETER,
-                    new NetworkCredential(string.Empty, totpCode).SecurePassword
+                    new NetworkCredential(string.Empty, totp.ComputeTotp()).SecurePassword
                 }
             };
         }
